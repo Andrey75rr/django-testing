@@ -44,9 +44,6 @@ class TestContent(TestCase):
         object_list = response.context['object_list']
         user_notes = Note.objects.filter(author=self.author)
         self.assertEqual(list(object_list), list(user_notes))
-        other_user_notes = Note.objects.filter(author=self.reader)
-        for note in other_user_notes:
-            self.assertNotIn(note, object_list)
 
     def test_pages_contain_forms(self):
         """На страницы создания и редактирования передаются формы."""

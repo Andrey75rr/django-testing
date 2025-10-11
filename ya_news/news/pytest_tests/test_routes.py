@@ -1,71 +1,79 @@
 import pytest
 from django.urls import reverse
+from http import HTTPStatus
 
 
-@pytest.mark.django_db
-def test_home_page_available_to_anonymous_user(client):
-    """Главная страница доступна анонимному пользователю."""
-    url = reverse('news:home')
+pytestmark = pytest.mark.django_db
+
+
+@pytest.fixture
+def home_url():
+    return reverse('news:home')
+
+
+@pytest.fixture
+def login_url():
+    return reverse('users:login')
+
+
+@pytest.fixture
+def logout_url():
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def detail_url(news):
+    return reverse('news:detail', args=(news.id,))
+
+
+@pytest.fixture
+def edit_url(comment):
+    return reverse('news:edit', args=(comment.id,))
+
+
+@pytest.fixture
+def delete_url(comment):
+    return reverse('news:delete', args=(comment.id,))
+
+
+@pytest.mark.parametrize(
+    'url_fixture, client_fixture, expected_status',
+    [
+        ('home_url', 'client', HTTPStatus.OK),
+        ('detail_url', 'client', HTTPStatus.OK),
+        ('edit_url', 'author_client', HTTPStatus.OK),
+        ('delete_url', 'author_client', HTTPStatus.OK),
+        ('login_url', 'client', HTTPStatus.OK),
+        ('logout_url', 'client', HTTPStatus.METHOD_NOT_ALLOWED),
+    ]
+)
+def test_pages_availability(
+    request, url_fixture, client_fixture, expected_status
+):
+    """Проверка доступности страниц с разными кодами ответа."""
+    url = request.getfixturevalue(url_fixture)
+    client = request.getfixturevalue(client_fixture)
     response = client.get(url)
-    assert response.status_code == 200
+    assert response.status_code == expected_status
 
 
-@pytest.mark.django_db
-def test_news_detail_available_to_anonymous_user(client, news):
-    """Страница отдельной новости доступна анонимному пользователю."""
-    url = reverse('news:detail', args=(news.id,))
+@pytest.mark.parametrize(
+    'url_fixture, client_fixture, expected_status, should_redirect',
+    [
+        ('edit_url', 'client', HTTPStatus.FOUND, True),
+        ('delete_url', 'client', HTTPStatus.FOUND, True),
+        ('edit_url', 'admin_client', HTTPStatus.NOT_FOUND, False),
+        ('delete_url', 'admin_client', HTTPStatus.NOT_FOUND, False),
+    ]
+)
+def test_redirects_and_errors(
+    request, url_fixture, client_fixture, expected_status, should_redirect
+):
+    """Проверка редиректов и ошибок доступа."""
+    url = request.getfixturevalue(url_fixture)
+    client = request.getfixturevalue(client_fixture)
     response = client.get(url)
-    assert response.status_code == 200
-
-
-def test_comment_edit_delete_available_to_author(author_client, comment):
-    """
-    Страницы удаления и редактирования
-    комментария доступны автору комментария.
-    """
-    edit_url = reverse('news:edit', args=(comment.id,))
-    delete_url = reverse('news:delete', args=(comment.id,))
-    response_edit = author_client.get(edit_url)
-    response_delete = author_client.get(delete_url)
-    assert response_edit.status_code == 200
-    assert response_delete.status_code == 200
-
-
-def test_comment_edit_delete_redirect_anonymous_to_login(client, comment):
-    """Анонимный пользователь перенаправляется на страницу авторизации."""
-    edit_url = reverse('news:edit', args=(comment.id,))
-    delete_url = reverse('news:delete', args=(comment.id,))
-    response_edit = client.get(edit_url)
-    response_delete = client.get(delete_url)
-    assert response_edit.status_code == 302
-    assert response_delete.status_code == 302
-    # Более надёжная проверка редиректа на логин
-    assert response_edit.url.startswith(reverse('users:login'))
-    assert response_delete.url.startswith(reverse('users:login'))
-
-
-def test_comment_edit_delete_not_available_other_user(admin_client, comment):
-    """
-    Авторизованный пользователь не может зайти на страницы
-    редактирования или удаления чужих комментариев.
-    """
-    edit_url = reverse('news:edit', args=(comment.id,))
-    delete_url = reverse('news:delete', args=(comment.id,))
-    response_edit = admin_client.get(edit_url)
-    response_delete = admin_client.get(delete_url)
-    assert response_edit.status_code == 404
-    assert response_delete.status_code == 404
-
-
-@pytest.mark.django_db
-def test_auth_pages_available_to_anonymous_user(client):
-    """
-    Страницы регистрации, входа и выхода
-    доступны анонимным пользователям.
-    """
-    login_url = reverse('users:login')
-    logout_url = reverse('users:logout')
-    response_login = client.get(login_url)
-    response_logout = client.get(logout_url)
-    assert response_login.status_code == 200
-    assert response_logout.status_code in [200, 302, 405]
+    assert response.status_code == expected_status
+    if should_redirect:
+        expected_redirect_url = reverse('users:login') + f'?next={url}'
+        assert response.url == expected_redirect_url

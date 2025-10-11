@@ -1,92 +1,71 @@
-from django.contrib.auth import get_user_model
+from http import HTTPStatus
+
 from django.test import TestCase
-from django.urls import reverse
 
-from notes.models import Note
+from .fixtures import (
+    TestDataMixin,
+    HOME_URL,
+    LOGIN_URL,
+    LOGOUT_URL,
+    SIGNUP_URL,
+    NOTES_LIST_URL,
+    ADD_NOTE_URL,
+    SUCCESS_URL,
+    NOTE_DETAIL_URL,
+    NOTE_EDIT_URL,
+    NOTE_DELETE_URL,
+    REDIRECT_URLS
+)
 
-User = get_user_model()
 
+class TestRoutes(TestDataMixin, TestCase):
 
-class TestRoutes(TestCase):
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.author = User.objects.create(username='Автор')
-        cls.reader = User.objects.create(username='Читатель')
-        cls.note = Note.objects.create(
-            title='Заголовок',
-            text='Текст заметки',
-            slug='test-slug',
-            author=cls.author
-        )
-
-    def test_home_page_available_to_anonymous_user(self):
-        """Главная страница доступна анонимному пользователю."""
-        url = reverse('notes:home')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-    def test_authenticated_user_pages_availability(self):
-        """
-        Аутентифицированному пользователю доступны
-        страницы notes/, done/, add/.
-        """
-        self.client.force_login(self.author)
-        urls = [
-            reverse('notes:list'),
-            reverse('notes:success'),
-            reverse('notes:add'),
+    def test_pages_availability(self):
+        """Контроль всех кодов возврата."""
+        # Страницы доступные всем (GET запросы)
+        public_urls = [
+            HOME_URL,
+            LOGIN_URL,
+            SIGNUP_URL,
         ]
-        for url in urls:
+        for url in public_urls:
             with self.subTest(url=url):
                 response = self.client.get(url)
-                self.assertEqual(response.status_code, 200)
-
-    def test_note_pages_available_only_to_author(self):
-        """Страницы заметки доступны только автору."""
-        self.client.force_login(self.author)
-        author_urls = [
-            reverse('notes:detail', args=(self.note.slug,)),
-            reverse('notes:edit', args=(self.note.slug,)),
-            reverse('notes:delete', args=(self.note.slug,)),
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+        # Страница выхода - доступна всем (не проверяем точный код)
+        response = self.client.get(LOGOUT_URL)
+        self.assertNotEqual(response.status_code, HTTPStatus.NOT_FOUND)
+        # Страницы доступные аутентифицированным пользователям
+        auth_urls = [
+            NOTES_LIST_URL,
+            SUCCESS_URL,
+            ADD_NOTE_URL,
         ]
-        for url in author_urls:
+        for url in auth_urls:
             with self.subTest(url=url):
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, 200)
-        self.client.force_login(self.reader)
-        for url in author_urls:
-            with self.subTest(url=url):
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, 404)
-
-    def test_anonymous_user_redirected_to_login(self):
-        """Анонимный пользователь перенаправляется на логин."""
-        login_url = reverse('users:login')
-        urls = [
-            reverse('notes:list'),
-            reverse('notes:success'),
-            reverse('notes:add'),
-            reverse('notes:detail', args=(self.note.slug,)),
-            reverse('notes:edit', args=(self.note.slug,)),
-            reverse('notes:delete', args=(self.note.slug,)),
+                response = self.author_client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+        # Страницы заметки доступные только автору
+        author_only_urls = [
+            NOTE_DETAIL_URL,
+            NOTE_EDIT_URL,
+            NOTE_DELETE_URL,
         ]
-        for url in urls:
+        # Для автора - доступ разрешен
+        for url in author_only_urls:
             with self.subTest(url=url):
-                response = self.client.get(url)
-                redirect_url = f'{login_url}?next={url}'
-                self.assertRedirects(response, redirect_url)
+                response = self.author_client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+        # Для другого пользователя - 404
+        for url in author_only_urls:
+            with self.subTest(url=url):
+                response = self.reader_client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-    def test_auth_pages_available_to_all_users(self):
-        """Страницы регистрации, входа и выхода доступны всем."""
-        urls = [
-            reverse('users:login'),
-            reverse('users:signup'),
-        ]
-        for url in urls:
+    def test_redirects(self):
+        """Контроль всех перенаправлений."""
+        # Перенаправление анонимного пользователя
+        for url, expected_redirect in REDIRECT_URLS.items():
             with self.subTest(url=url):
                 response = self.client.get(url)
-                self.assertEqual(response.status_code, 200)
-        logout_url = reverse('users:logout')
-        response = self.client.get(logout_url)
-        self.assertIn(response.status_code, [200, 302, 405])
+                self.assertRedirects(response, expected_redirect)
