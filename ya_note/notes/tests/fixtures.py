@@ -16,7 +16,7 @@ class TestDataMixin:
         cls.note = Note.objects.create(
             title='Заголовок',
             text='Текст заметки',
-            slug='test-slug',
+            slug='note-slug',  # Уникальный slug
             author=cls.author
         )
         cls.form_data = {
@@ -32,7 +32,7 @@ class TestDataMixin:
         self.reader_client.force_login(self.reader)
 
 
-# URL константы
+# URL константы - ВСЕ URL рассчитаны заранее
 HOME_URL = reverse('notes:home')
 LOGIN_URL = reverse('users:login')
 LOGOUT_URL = reverse('users:logout')
@@ -41,8 +41,8 @@ NOTES_LIST_URL = reverse('notes:list')
 ADD_NOTE_URL = reverse('notes:add')
 SUCCESS_URL = reverse('notes:success')
 
-# URL с параметрами
-NOTE_SLUG = 'test-slug'
+# URL с параметрами - константные тестовые данные
+NOTE_SLUG = 'note-slug'
 NOTE_DETAIL_URL = reverse('notes:detail', args=(NOTE_SLUG,))
 NOTE_EDIT_URL = reverse('notes:edit', args=(NOTE_SLUG,))
 NOTE_DELETE_URL = reverse('notes:delete', args=(NOTE_SLUG,))
@@ -58,7 +58,7 @@ REDIRECT_URLS = {
 }
 
 
-# Функции для получения URL (если нужны для других slug)
+# Функции для получения URL с другими slug
 def get_note_detail_url(slug):
     return reverse('notes:detail', args=(slug,))
 

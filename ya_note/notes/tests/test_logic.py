@@ -9,8 +9,8 @@ from .fixtures import (
     ADD_NOTE_URL,
     SUCCESS_URL,
     LOGIN_URL,
-    get_note_edit_url,
-    get_note_delete_url
+    NOTE_EDIT_URL,
+    NOTE_DELETE_URL
 )
 
 User = get_user_model()
@@ -63,6 +63,7 @@ class TestLogic(TestDataMixin, TestCase):
         notes_before = set(Note.objects.values_list('id', flat=True))
         form_data = self.form_data.copy()
         form_data.pop('slug')
+        form_data['title'] = 'Заголовок для авто-slug'
         response = self.author_client.post(ADD_NOTE_URL, data=form_data)
         self.assertRedirects(response, SUCCESS_URL)
         notes_after = set(Note.objects.values_list('id', flat=True))
@@ -82,8 +83,7 @@ class TestLogic(TestDataMixin, TestCase):
             'slug': self.note.slug,
             'author': self.note.author
         }
-        url = get_note_edit_url(self.note.slug)
-        response = self.author_client.post(url, data=self.form_data)
+        response = self.author_client.post(NOTE_EDIT_URL, data=self.form_data)
         self.assertRedirects(response, SUCCESS_URL)
         updated_note = Note.objects.get(id=self.note.id)
         self.assertEqual(updated_note.title, self.form_data['title'])
@@ -95,8 +95,7 @@ class TestLogic(TestDataMixin, TestCase):
         """Пользователь может удалять свои заметки."""
         notes_before = set(Note.objects.values_list('id', flat=True))
         self.assertIn(self.note.id, notes_before)
-        url = get_note_delete_url(self.note.slug)
-        response = self.author_client.post(url)
+        response = self.author_client.post(NOTE_DELETE_URL)
         self.assertRedirects(response, SUCCESS_URL)
         notes_after = set(Note.objects.values_list('id', flat=True))
         self.assertNotIn(self.note.id, notes_after)
@@ -110,8 +109,7 @@ class TestLogic(TestDataMixin, TestCase):
             'slug': self.note.slug,
             'author': self.note.author
         }
-        url = get_note_edit_url(self.note.slug)
-        response = self.reader_client.post(url, data=self.form_data)
+        response = self.reader_client.post(NOTE_EDIT_URL, data=self.form_data)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         unchanged_note = Note.objects.get(id=self.note.id)
         self.assertEqual(unchanged_note.title, note_data_before['title'])
@@ -123,8 +121,7 @@ class TestLogic(TestDataMixin, TestCase):
         """Пользователь не может удалять чужие заметки."""
         notes_before = set(Note.objects.values_list('id', flat=True))
         self.assertIn(self.note.id, notes_before)
-        url = get_note_delete_url(self.note.slug)
-        response = self.reader_client.post(url)
+        response = self.reader_client.post(NOTE_DELETE_URL)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         notes_after = set(Note.objects.values_list('id', flat=True))
         self.assertEqual(notes_after, notes_before)

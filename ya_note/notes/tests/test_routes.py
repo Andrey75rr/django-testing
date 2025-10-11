@@ -32,9 +32,11 @@ class TestRoutes(TestDataMixin, TestCase):
             with self.subTest(url=url):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
+
         # Страница выхода - доступна всем (не проверяем точный код)
         response = self.client.get(LOGOUT_URL)
         self.assertNotEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
         # Страницы доступные аутентифицированным пользователям
         auth_urls = [
             NOTES_LIST_URL,
@@ -45,6 +47,7 @@ class TestRoutes(TestDataMixin, TestCase):
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
+
         # Страницы заметки доступные только автору
         author_only_urls = [
             NOTE_DETAIL_URL,
@@ -56,6 +59,7 @@ class TestRoutes(TestDataMixin, TestCase):
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
+
         # Для другого пользователя - 404
         for url in author_only_urls:
             with self.subTest(url=url):
