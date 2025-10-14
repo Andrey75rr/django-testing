@@ -16,7 +16,7 @@ class TestDataMixin:
         cls.note = Note.objects.create(
             title='Заголовок',
             text='Текст заметки',
-            slug='note-slug',  # Уникальный slug
+            slug='note-slug',
             author=cls.author
         )
         cls.form_data = {
@@ -48,24 +48,18 @@ NOTE_EDIT_URL = reverse('notes:edit', args=(NOTE_SLUG,))
 NOTE_DELETE_URL = reverse('notes:delete', args=(NOTE_SLUG,))
 
 # URL для перенаправлений
+REDIRECT_NOTES_LIST_URL = f'{LOGIN_URL}?next={NOTES_LIST_URL}'
+REDIRECT_SUCCESS_URL = f'{LOGIN_URL}?next={SUCCESS_URL}'
+REDIRECT_ADD_NOTE_URL = f'{LOGIN_URL}?next={ADD_NOTE_URL}'
+REDIRECT_NOTE_DETAIL_URL = f'{LOGIN_URL}?next={NOTE_DETAIL_URL}'
+REDIRECT_NOTE_EDIT_URL = f'{LOGIN_URL}?next={NOTE_EDIT_URL}'
+REDIRECT_NOTE_DELETE_URL = f'{LOGIN_URL}?next={NOTE_DELETE_URL}'
+
 REDIRECT_URLS = {
-    NOTES_LIST_URL: f'{LOGIN_URL}?next={NOTES_LIST_URL}',
-    SUCCESS_URL: f'{LOGIN_URL}?next={SUCCESS_URL}',
-    ADD_NOTE_URL: f'{LOGIN_URL}?next={ADD_NOTE_URL}',
-    NOTE_DETAIL_URL: f'{LOGIN_URL}?next={NOTE_DETAIL_URL}',
-    NOTE_EDIT_URL: f'{LOGIN_URL}?next={NOTE_EDIT_URL}',
-    NOTE_DELETE_URL: f'{LOGIN_URL}?next={NOTE_DELETE_URL}',
+    NOTES_LIST_URL: REDIRECT_NOTES_LIST_URL,
+    SUCCESS_URL: REDIRECT_SUCCESS_URL,
+    ADD_NOTE_URL: REDIRECT_ADD_NOTE_URL,
+    NOTE_DETAIL_URL: REDIRECT_NOTE_DETAIL_URL,
+    NOTE_EDIT_URL: REDIRECT_NOTE_EDIT_URL,
+    NOTE_DELETE_URL: REDIRECT_NOTE_DELETE_URL,
 }
-
-
-# Функции для получения URL с другими slug
-def get_note_detail_url(slug):
-    return reverse('notes:detail', args=(slug,))
-
-
-def get_note_edit_url(slug):
-    return reverse('notes:edit', args=(slug,))
-
-
-def get_note_delete_url(slug):
-    return reverse('notes:delete', args=(slug,))

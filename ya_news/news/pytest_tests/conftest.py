@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
+
 import pytest
-from django.utils import timezone
 from django.conf import settings
+from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 
 from news.models import News, Comment
-from django.test import Client
 
 
 @pytest.fixture
@@ -127,3 +128,8 @@ def login_url_with_edit_redirect(edit_url, login_url):
 @pytest.fixture
 def login_url_with_delete_redirect(delete_url, login_url):
     return f'{login_url}?next={delete_url}'
+
+
+@pytest.fixture
+def signup_url():
+    return reverse('users:signup')

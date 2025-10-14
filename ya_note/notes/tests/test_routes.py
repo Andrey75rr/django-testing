@@ -22,54 +22,34 @@ class TestRoutes(TestDataMixin, TestCase):
 
     def test_pages_availability(self):
         """Контроль всех кодов возврата."""
-        # Страницы доступные всем (GET запросы)
-        public_urls = [
-            HOME_URL,
-            LOGIN_URL,
-            SIGNUP_URL,
+        test_cases = [
+            (HOME_URL, self.client, HTTPStatus.OK),
+            (LOGIN_URL, self.client, HTTPStatus.OK),
+            (SIGNUP_URL, self.client, HTTPStatus.OK),
+            (NOTES_LIST_URL, self.author_client, HTTPStatus.OK),
+            (SUCCESS_URL, self.author_client, HTTPStatus.OK),
+            (ADD_NOTE_URL, self.author_client, HTTPStatus.OK),
+            (NOTE_DETAIL_URL, self.author_client, HTTPStatus.OK),
+            (NOTE_EDIT_URL, self.author_client, HTTPStatus.OK),
+            (NOTE_DELETE_URL, self.author_client, HTTPStatus.OK),
+            (NOTE_DETAIL_URL, self.reader_client, HTTPStatus.NOT_FOUND),
+            (NOTE_EDIT_URL, self.reader_client, HTTPStatus.NOT_FOUND),
+            (NOTE_DELETE_URL, self.reader_client, HTTPStatus.NOT_FOUND),
         ]
-        for url in public_urls:
-            with self.subTest(url=url):
-                response = self.client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
-
-        # Страница выхода - доступна всем (не проверяем точный код)
+        for url, client, expected_status in test_cases:
+            with self.subTest(url=url, client=client.__class__.__name__):
+                response = client.get(url)
+                self.assertEqual(response.status_code, expected_status)
         response = self.client.get(LOGOUT_URL)
         self.assertNotEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
-        # Страницы доступные аутентифицированным пользователям
-        auth_urls = [
-            NOTES_LIST_URL,
-            SUCCESS_URL,
-            ADD_NOTE_URL,
-        ]
-        for url in auth_urls:
-            with self.subTest(url=url):
-                response = self.author_client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
-
-        # Страницы заметки доступные только автору
-        author_only_urls = [
-            NOTE_DETAIL_URL,
-            NOTE_EDIT_URL,
-            NOTE_DELETE_URL,
-        ]
-        # Для автора - доступ разрешен
-        for url in author_only_urls:
-            with self.subTest(url=url):
-                response = self.author_client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.OK)
-
-        # Для другого пользователя - 404
-        for url in author_only_urls:
-            with self.subTest(url=url):
-                response = self.reader_client.get(url)
-                self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
-
     def test_redirects(self):
         """Контроль всех перенаправлений."""
-        # Перенаправление анонимного пользователя
-        for url, expected_redirect in REDIRECT_URLS.items():
+        test_cases = [
+            (url, expected_redirect)
+            for url, expected_redirect in REDIRECT_URLS.items()
+        ]
+        for url, expected_redirect in test_cases:
             with self.subTest(url=url):
                 response = self.client.get(url)
                 self.assertRedirects(response, expected_redirect)
