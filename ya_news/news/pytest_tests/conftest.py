@@ -133,3 +133,8 @@ def login_url_with_delete_redirect(delete_url, login_url):
 @pytest.fixture
 def signup_url():
     return reverse('users:signup')
+
+
+@pytest.fixture
+def login_url_with_detail_redirect(detail_url, login_url):
+    return f'{login_url}?next={detail_url}'

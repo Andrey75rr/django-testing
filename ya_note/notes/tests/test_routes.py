@@ -14,7 +14,12 @@ from .fixtures import (
     NOTE_DETAIL_URL,
     NOTE_EDIT_URL,
     NOTE_DELETE_URL,
-    REDIRECT_URLS
+    REDIRECT_NOTES_LIST_URL,
+    REDIRECT_SUCCESS_URL,
+    REDIRECT_ADD_NOTE_URL,
+    REDIRECT_NOTE_DETAIL_URL,
+    REDIRECT_NOTE_EDIT_URL,
+    REDIRECT_NOTE_DELETE_URL
 )
 
 
@@ -26,6 +31,7 @@ class TestRoutes(TestDataMixin, TestCase):
             (HOME_URL, self.client, HTTPStatus.OK),
             (LOGIN_URL, self.client, HTTPStatus.OK),
             (SIGNUP_URL, self.client, HTTPStatus.OK),
+            (LOGOUT_URL, self.client, HTTPStatus.OK),
             (NOTES_LIST_URL, self.author_client, HTTPStatus.OK),
             (SUCCESS_URL, self.author_client, HTTPStatus.OK),
             (ADD_NOTE_URL, self.author_client, HTTPStatus.OK),
@@ -35,19 +41,34 @@ class TestRoutes(TestDataMixin, TestCase):
             (NOTE_DETAIL_URL, self.reader_client, HTTPStatus.NOT_FOUND),
             (NOTE_EDIT_URL, self.reader_client, HTTPStatus.NOT_FOUND),
             (NOTE_DELETE_URL, self.reader_client, HTTPStatus.NOT_FOUND),
+            (NOTES_LIST_URL, self.client, HTTPStatus.FOUND),
+            (SUCCESS_URL, self.client, HTTPStatus.FOUND),
+            (ADD_NOTE_URL, self.client, HTTPStatus.FOUND),
+            (NOTE_DETAIL_URL, self.client, HTTPStatus.FOUND),
+            (NOTE_EDIT_URL, self.client, HTTPStatus.FOUND),
+            (NOTE_DELETE_URL, self.client, HTTPStatus.FOUND),
         ]
         for url, client, expected_status in test_cases:
             with self.subTest(url=url, client=client.__class__.__name__):
-                response = client.get(url)
+                if url == LOGOUT_URL:
+                    response = client.post(url)
+                else:
+                    response = client.get(url)
                 self.assertEqual(response.status_code, expected_status)
-        response = self.client.get(LOGOUT_URL)
-        self.assertNotEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_redirects(self):
         """Контроль всех перенаправлений."""
+        redirect_urls = {
+            NOTES_LIST_URL: REDIRECT_NOTES_LIST_URL,
+            SUCCESS_URL: REDIRECT_SUCCESS_URL,
+            ADD_NOTE_URL: REDIRECT_ADD_NOTE_URL,
+            NOTE_DETAIL_URL: REDIRECT_NOTE_DETAIL_URL,
+            NOTE_EDIT_URL: REDIRECT_NOTE_EDIT_URL,
+            NOTE_DELETE_URL: REDIRECT_NOTE_DELETE_URL,
+        }
         test_cases = [
             (url, expected_redirect)
-            for url, expected_redirect in REDIRECT_URLS.items()
+            for url, expected_redirect in redirect_urls.items()
         ]
         for url, expected_redirect in test_cases:
             with self.subTest(url=url):

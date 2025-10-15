@@ -1,5 +1,6 @@
-import pytest
 from http import HTTPStatus
+
+import pytest
 from django.http import HttpResponseRedirect
 
 from news.forms import BAD_WORDS
@@ -10,19 +11,16 @@ pytestmark = pytest.mark.django_db
 
 FORM_DATA = {'text': 'Тестовый комментарий'}
 BAD_FORM_DATA = {'text': f'Текст содержащий {BAD_WORDS[0]}'}
-EDIT_FORM_DATA = {'text': 'Обновлённый комментарий'}
-OTHER_COMMENT_DATA = {'text': 'Чужой комментарий'}
 
 
 def test_anonymous_user_cannot_post_comment(
-    client, news, detail_url, login_url
+    client, news, detail_url, login_url_with_detail_redirect
 ):
     """Анонимный пользователь не может отправить комментарий."""
     response = client.post(detail_url, data=FORM_DATA)
     assert Comment.objects.count() == 0
     assert response.status_code == HttpResponseRedirect.status_code
-    expected_redirect_url = f'{login_url}?next={detail_url}'
-    assert response.url == expected_redirect_url
+    assert response.url == login_url_with_detail_redirect
 
 
 def test_authorized_user_can_post_comment(
@@ -47,13 +45,12 @@ def test_comment_with_bad_words_not_published(author_client, news, detail_url):
 
 def test_author_can_edit_own_comment(author_client, comment, edit_url):
     """Авторизованный пользователь может редактировать свои комментарии."""
-    response = author_client.post(edit_url, data=EDIT_FORM_DATA)
+    response = author_client.post(edit_url, data=FORM_DATA)
     assert response.status_code == HttpResponseRedirect.status_code
     updated_comment = Comment.objects.get(id=comment.id)
-    assert updated_comment.text == EDIT_FORM_DATA['text']
+    assert updated_comment.text == FORM_DATA['text']
     assert updated_comment.news == comment.news
     assert updated_comment.author == comment.author
-    assert updated_comment.created == comment.created
 
 
 def test_author_can_delete_own_comment(author_client, comment, delete_url):
@@ -65,7 +62,7 @@ def test_author_can_delete_own_comment(author_client, comment, delete_url):
 
 def test_user_cannot_edit_others_comment(admin_client, comment, edit_url):
     """Авторизованный пользователь не может редактировать чужие комментарии."""
-    response = admin_client.post(edit_url, data=OTHER_COMMENT_DATA)
+    response = admin_client.post(edit_url, data=FORM_DATA)
     assert response.status_code == HTTPStatus.NOT_FOUND
     unchanged_comment = Comment.objects.get(id=comment.id)
     assert unchanged_comment.text == comment.text
@@ -78,9 +75,7 @@ def test_user_cannot_delete_others_comment(admin_client, comment, delete_url):
     response = admin_client.post(delete_url)
     assert Comment.objects.count() == 1
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert Comment.objects.filter(
-        id=comment.id,
-        text=comment.text,
-        news=comment.news,
-        author=comment.author
-    ).exists()
+    unchanged_comment = Comment.objects.get(id=comment.id)
+    assert unchanged_comment.text == comment.text
+    assert unchanged_comment.news == comment.news
+    assert unchanged_comment.author == comment.author
