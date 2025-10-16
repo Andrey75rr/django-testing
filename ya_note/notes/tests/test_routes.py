@@ -66,11 +66,7 @@ class TestRoutes(TestDataMixin, TestCase):
             NOTE_EDIT_URL: REDIRECT_NOTE_EDIT_URL,
             NOTE_DELETE_URL: REDIRECT_NOTE_DELETE_URL,
         }
-        test_cases = [
-            (url, expected_redirect)
-            for url, expected_redirect in redirect_urls.items()
-        ]
-        for url, expected_redirect in test_cases:
+        for url, expected_redirect in redirect_urls.items():
             with self.subTest(url=url):
                 response = self.client.get(url)
                 self.assertRedirects(response, expected_redirect)

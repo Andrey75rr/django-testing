@@ -21,12 +21,14 @@ class TestLogic(TestDataMixin, TestCase):
 
     def test_authenticated_user_can_create_note(self):
         """Залогиненный пользователь может создать заметку."""
-        notes_count_before = Note.objects.count()
+        note_ids_before = set(Note.objects.values_list('id', flat=True))
         response = self.author_client.post(ADD_NOTE_URL, data=self.form_data)
         self.assertRedirects(response, SUCCESS_URL)
-        notes_count_after = Note.objects.count()
-        self.assertEqual(notes_count_after, notes_count_before + 1)
-        new_note = Note.objects.filter(author=self.author).latest('id')
+        note_ids_after = set(Note.objects.values_list('id', flat=True))
+        new_note_ids = note_ids_after - note_ids_before
+        self.assertEqual(len(new_note_ids), 1)
+        new_note_id = new_note_ids.pop()
+        new_note = Note.objects.get(id=new_note_id)
         self.assertEqual(new_note.title, self.form_data['title'])
         self.assertEqual(new_note.text, self.form_data['text'])
         self.assertEqual(new_note.slug, self.form_data['slug'])
@@ -34,15 +36,15 @@ class TestLogic(TestDataMixin, TestCase):
 
     def test_anonymous_user_cannot_create_note(self):
         """Анонимный пользователь не может создать заметку."""
-        notes_before = set(Note.objects.values_list('id', flat=True))
+        note_ids_before = set(Note.objects.values_list('id', flat=True))
         response = self.client.post(ADD_NOTE_URL, data=self.form_data)
-        notes_after = set(Note.objects.values_list('id', flat=True))
-        self.assertEqual(notes_after, notes_before)
+        note_ids_after = set(Note.objects.values_list('id', flat=True))
+        self.assertEqual(note_ids_after, note_ids_before)
         self.assertRedirects(response, REDIRECT_ADD_NOTE_URL)
 
     def test_cannot_create_duplicate_slug(self):
         """Невозможно создать две заметки с одинаковым slug."""
-        notes_count_before = Note.objects.count()
+        note_ids_before = set(Note.objects.values_list('id', flat=True))
         self.form_data['slug'] = self.note.slug
         response = self.author_client.post(ADD_NOTE_URL, data=self.form_data)
         expected_error = (
@@ -54,7 +56,8 @@ class TestLogic(TestDataMixin, TestCase):
             'slug',
             expected_error
         )
-        self.assertEqual(Note.objects.count(), notes_count_before)
+        note_ids_after = set(Note.objects.values_list('id', flat=True))
+        self.assertEqual(note_ids_after, note_ids_before)
 
     def test_auto_slug_generation(self):
         """Slug формируется автоматически, если не заполнен."""

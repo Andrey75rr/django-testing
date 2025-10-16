@@ -22,6 +22,19 @@ class TestContent(TestDataMixin, TestCase):
         self.assertEqual(note.slug, self.note.slug)
         self.assertEqual(note.author, self.note.author)
 
+    def test_author_does_not_see_others_notes(self):
+        """Автор не видит чужие заметки в списке."""
+        response = self.author_client.get(NOTES_LIST_URL)
+        notes = response.context['object_list']
+        self.assertNotIn(self.other_note, notes)
+
+    def test_other_user_does_not_see_authors_notes(self):
+        """Другой пользователь не видит заметки автора."""
+        response = self.reader_client.get(NOTES_LIST_URL)
+        notes = response.context['object_list']
+        self.assertNotIn(self.note, notes)
+        self.assertIn(self.other_note, notes)
+
     def test_pages_contain_forms(self):
         """На страницы создания и редактирования передаются формы."""
         urls_with_forms = [

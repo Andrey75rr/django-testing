@@ -40,14 +40,18 @@ class TestDataMixin:
             slug=NOTE_SLUG,
             author=cls.author
         )
+        cls.other_note = Note.objects.create(
+            title='Заголовок другого пользователя',
+            text='Текст другой заметки',
+            slug='other-slug',
+            author=cls.reader
+        )
         cls.form_data = {
             'title': 'Новый заголовок',
             'text': 'Новый текст',
             'slug': 'new-slug'
         }
-
-    def setUp(self):
-        self.author_client = self.client_class()
-        self.author_client.force_login(self.author)
-        self.reader_client = self.client_class()
-        self.reader_client.force_login(self.reader)
+        cls.author_client = cls.client_class()
+        cls.author_client.force_login(cls.author)
+        cls.reader_client = cls.client_class()
+        cls.reader_client.force_login(cls.reader)

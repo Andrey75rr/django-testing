@@ -9,7 +9,7 @@ from news.models import Comment
 
 pytestmark = pytest.mark.django_db
 
-FORM_DATA = {'text': 'Тестовый комментарий'}
+FORM_DATA = {'text': 'Текст из формы комментария'}
 BAD_FORM_DATA = {'text': f'Текст содержащий {BAD_WORDS[0]}'}
 
 
