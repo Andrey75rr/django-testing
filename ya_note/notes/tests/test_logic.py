@@ -80,11 +80,11 @@ class TestLogic(TestDataMixin, TestCase):
         """Пользователь может редактировать свои заметки."""
         response = self.author_client.post(NOTE_EDIT_URL, data=self.form_data)
         self.assertRedirects(response, SUCCESS_URL)
-        updated_note = Note.objects.get(id=self.note.id)
-        self.assertEqual(updated_note.title, self.form_data['title'])
-        self.assertEqual(updated_note.text, self.form_data['text'])
-        self.assertEqual(updated_note.slug, self.form_data['slug'])
-        self.assertEqual(updated_note.author, self.note.author)
+        note = Note.objects.get(id=self.note.id)
+        self.assertEqual(note.title, self.form_data['title'])
+        self.assertEqual(note.text, self.form_data['text'])
+        self.assertEqual(note.slug, self.form_data['slug'])
+        self.assertEqual(note.author, self.note.author)
 
     def test_author_can_delete_own_note(self):
         """Пользователь может удалять свои заметки."""

@@ -40,12 +40,6 @@ class TestDataMixin:
             slug=NOTE_SLUG,
             author=cls.author
         )
-        cls.other_note = Note.objects.create(
-            title='Заголовок другого пользователя',
-            text='Текст другой заметки',
-            slug='other-slug',
-            author=cls.reader
-        )
         cls.form_data = {
             'title': 'Новый заголовок',
             'text': 'Новый текст',
