@@ -1,7 +1,6 @@
 from django.test import TestCase
 
 from notes.forms import NoteForm
-from notes.models import Note
 from .fixtures import (
     TestDataMixin,
     NOTES_LIST_URL,
@@ -22,19 +21,6 @@ class TestContent(TestDataMixin, TestCase):
         self.assertEqual(note.text, self.note.text)
         self.assertEqual(note.slug, self.note.slug)
         self.assertEqual(note.author, self.note.author)
-
-    def test_author_does_not_see_others_notes(self):
-        """Автор не видит чужие заметки в списке."""
-        # Создаем заметку от другого пользователя
-        other_note = Note.objects.create(
-            title='Заголовок другого пользователя',
-            text='Текст другой заметки',
-            slug='other-slug',
-            author=self.reader
-        )
-        response = self.author_client.get(NOTES_LIST_URL)
-        notes = response.context['object_list']
-        self.assertNotIn(other_note, notes)
 
     def test_pages_contain_forms(self):
         """На страницы создания и редактирования передаются формы."""

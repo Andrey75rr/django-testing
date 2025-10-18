@@ -1,11 +1,9 @@
-from http import HTTPStatus
-
 import pytest
-
+from pytest_lazy_fixtures import lf
+from http import HTTPStatus
 
 pytestmark = pytest.mark.django_db
 
-# Константы для статусов
 OK = HTTPStatus.OK
 FOUND = HTTPStatus.FOUND
 NOT_FOUND = HTTPStatus.NOT_FOUND
@@ -13,45 +11,38 @@ METHOD_NOT_ALLOWED = HTTPStatus.METHOD_NOT_ALLOWED
 
 
 @pytest.mark.parametrize(
-    # не работает у меня код через pytest.lazy!!!!!!
-    #  не работает, уже пробовал по разному pytest не поддерживает
-    'url_name, client_fixture, expected_status',
+    'url, client_name, expected_status',
     [
-        ('home_url', 'client', OK),
-        ('detail_url', 'client', OK),
-        ('login_url', 'client', OK),
-        ('signup_url', 'client', OK),
-        ('logout_url', 'client', METHOD_NOT_ALLOWED),
-        ('edit_url', 'author_client', OK),
-        ('delete_url', 'author_client', OK),
-        ('edit_url', 'admin_client', NOT_FOUND),
-        ('delete_url', 'admin_client', NOT_FOUND),
-        ('edit_url', 'client', FOUND),
-        ('delete_url', 'client', FOUND),
+        (lf('home_url'), 'client', OK),
+        (lf('detail_url'), 'client', OK),
+        (lf('login_url'), 'client', OK),
+        (lf('signup_url'), 'client', OK),
+        (lf('logout_url'), 'client', METHOD_NOT_ALLOWED),
+        (lf('edit_url'), 'author_client', OK),
+        (lf('delete_url'), 'author_client', OK),
+        (lf('edit_url'), 'admin_client', NOT_FOUND),
+        (lf('delete_url'), 'admin_client', NOT_FOUND),
+        (lf('edit_url'), 'client', FOUND),
+        (lf('delete_url'), 'client', FOUND),
     ]
 )
-def test_pages_status_codes(
-    request, url_name,
-    client_fixture,
-    expected_status
-):
+def test_pages_status_codes(request, url, client_name, expected_status):
     """Все проверки статусов в одном тесте."""
-    url = request.getfixturevalue(url_name)
-    client = request.getfixturevalue(client_fixture)
+    client = request.getfixturevalue(client_name)
     response = client.get(url)
     assert response.status_code == expected_status
 
 
 @pytest.mark.parametrize(
-    'url_name, redirect_url_name',
+    'url, redirect_url',
     [
-        ('edit_url', 'login_url_with_edit_redirect'),
-        ('delete_url', 'login_url_with_delete_redirect'),
+        (lf('edit_url'), lf('login_url_with_edit_redirect')),
+        (lf('delete_url'), lf('login_url_with_delete_redirect')),
     ]
 )
-def test_redirects_urls(client, request, url_name, redirect_url_name):
+def test_redirects_urls(request, url, redirect_url):
     """Все проверки конечных урлов редиректов в одном тесте."""
-    url = request.getfixturevalue(url_name)
-    expected_redirect = request.getfixturevalue(redirect_url_name)
+    client = request.getfixturevalue('client')
     response = client.get(url)
-    assert response.url == expected_redirect
+    assert response.status_code == FOUND
+    assert response.url == redirect_url
