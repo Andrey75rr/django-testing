@@ -107,7 +107,7 @@ class TestLogic(TestDataMixin, TestCase):
         self.assertEqual(unchanged_note.author, self.note.author)
 
     def test_user_cannot_delete_others_note(self):
-        """Пользователь не может удалять чужие заметки."""
+        """Пользователь не может удалять чужие заметкии."""
         notes_count_before = Note.objects.count()
         self.assertTrue(Note.objects.filter(id=self.note.id).exists())
         response = self.reader_client.post(NOTE_DELETE_URL)
