@@ -138,3 +138,9 @@ def signup_url():
 @pytest.fixture
 def login_url_with_detail_redirect(detail_url, login_url):
     return f'{login_url}?next={detail_url}'
+
+
+@pytest.fixture
+def anon_client():
+    """Создает анонимного клиента (неавторизованный)."""
+    return Client()
