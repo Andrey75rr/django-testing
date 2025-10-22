@@ -11,9 +11,9 @@ FOUND = HTTPStatus.FOUND
 NOT_FOUND = HTTPStatus.NOT_FOUND
 METHOD_NOT_ALLOWED = HTTPStatus.METHOD_NOT_ALLOWED
 
-# Выносим все вызовы pytest.lazy_fixture в константы на уровне модуля
-AUTHOR_CLIENT = pytest.lazy_fixture('author_client')
-ADMIN_CLIENT = pytest.lazy_fixture('admin_client')
+ANON_CLIENT = 'client'
+AUTHOR_CLIENT = 'author_client'
+ADMIN_CLIENT = 'admin_client'
 HOME_URL = pytest.lazy_fixture('home_url')
 DETAIL_URL = pytest.lazy_fixture('detail_url')
 LOGIN_URL = pytest.lazy_fixture('login_url')
@@ -32,23 +32,22 @@ LOGIN_URL_WITH_DELETE_REDIRECT = pytest.lazy_fixture(
 @pytest.mark.parametrize(
     'url, client_fixture, expected_status',
     [
-        (HOME_URL, 'client', OK),
-        (DETAIL_URL, 'client', OK),
-        (LOGIN_URL, 'client', OK),
-        (SIGNUP_URL, 'client', OK),
-        (LOGOUT_URL, 'client', METHOD_NOT_ALLOWED),
-        (EDIT_URL, 'author_client', OK),
-        (DELETE_URL, 'author_client', OK),
-        (EDIT_URL, 'admin_client', NOT_FOUND),
-        (DELETE_URL, 'admin_client', NOT_FOUND),
-        (EDIT_URL, 'client', FOUND),
-        (DELETE_URL, 'client', FOUND),
+        (HOME_URL, ANON_CLIENT, OK),
+        (DETAIL_URL, ANON_CLIENT, OK),
+        (LOGIN_URL, ANON_CLIENT, OK),
+        (SIGNUP_URL, ANON_CLIENT, OK),
+        (LOGOUT_URL, ANON_CLIENT, METHOD_NOT_ALLOWED),
+        (EDIT_URL, AUTHOR_CLIENT, OK),
+        (DELETE_URL, AUTHOR_CLIENT, OK),
+        (EDIT_URL, ADMIN_CLIENT, NOT_FOUND),
+        (DELETE_URL, ADMIN_CLIENT, NOT_FOUND),
+        (EDIT_URL, ANON_CLIENT, FOUND),
+        (DELETE_URL, ANON_CLIENT, FOUND),
     ]
 )
 def test_pages_status_codes(url, client_fixture, expected_status, request):
     """Все проверки статусов в одном тесте."""
-    client = request.getfixturevalue(client_fixture)
-    response = client.get(url)
+    response = request.getfixturevalue(client_fixture).get(url)
     assert response.status_code == expected_status
 
 
